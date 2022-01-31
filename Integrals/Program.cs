@@ -47,22 +47,22 @@ namespace Integrals
             return (s1);
         }
 
-        static double WithThreads(double a, double b, int n)
+        static double WithThreads(double a, double b)
         {
-            double width;
             double heights = 0.0;
-            width = (b - a) / n; //шаг
-        
+            double width = (b-a)/8;
             List<Thread> threads = new List<Thread>();
             List<Function> results = new List<Function>();
-            for (int i = 0; i < n; i++)
+
+            for (int i = 0; i < 8; i++)
             {
-                Function height = new Function(a, i, width);
-                Thread thread = new Thread(height.FunctionWithThreads);
+                Function height = new Function(a,a + width);
+                threads.Add(new Thread(height.WithThreads));
                 results.Add(height);
-                threads.Add(thread);
+                a += width;
             }
-        
+            sw.Reset();
+            sw.Start();
             foreach (var t in threads)
             {
                 t.Start();
@@ -73,29 +73,15 @@ namespace Integrals
                 t.Join();
             }
         
-            for (int i = 0; i < n; i++)
+            for (int i = 0; i < 8; i++)
             {
                 heights += results[i].GetResult();
             }
+            
+            sw.Stop();
+            return (heights); 
         
-            double s1 = heights * width;
-            if (n == 1)
-            {
-                s = s1;
-                n = n * 2;
-                WithThreads(a, b, n);
-            }
-        
-            if (Math.Abs(s1 - s) >= eps)
-            {
-                n = n * 2;
-                s = s1;
-                s1 = WithThreads(a, b, n);
-            }
-        
-            return (s1); //приближенное значение интеграла равно 
-            //сумме площадей прямоугольников
-        
+            
         }
 
         static void Main(string[] args)
@@ -117,10 +103,10 @@ namespace Integrals
             sw.Stop();
             Console.Write($"\nБез потоков :: Интеграл = {res1}\n" +
                           $"Время :: {sw.Elapsed}"+"\n");
-            sw.Reset();
-            sw.Start();
-            var res2 = WithThreads(a, b, n);
-            sw.Stop();
+           // sw.Reset();
+           // sw.Start();
+            var res2 = WithThreads(a, b);
+            //sw.Stop();
             Console.Write($"\nС потоками :: Интеграл = {res2}\n" +
                           $"Время :: {sw.Elapsed}");
 
